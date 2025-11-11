@@ -175,7 +175,7 @@ class SteganographyMessengerApp:
             title="Save stego image",
             defaultextension=".png",
             initialfile=initial,
-            filetypes=[("PNG image", "*.png"), ("Bitmap", "*.bmp"), ("JPEG", "*.jpg;*.jpeg")],
+            filetypes=[("PNG image", "*.png"), ("Bitmap", "*.bmp")],
         )
         if path:
             self.output_image_path.set(path)
@@ -249,6 +249,11 @@ class SteganographyMessengerApp:
                 raise ValueError("A valid cover image must be selected")
             if not output_path:
                 raise ValueError("Please provide a destination for the stego image")
+            suffix = Path(output_path).suffix.lower()
+            if suffix in {".jpg", ".jpeg"}:
+                raise ValueError(
+                    "JPEG output cannot safely store embedded data. Choose a PNG or BMP file instead."
+                )
             if not password:
                 raise ValueError("Password is required for embedding")
             if not message:
@@ -315,6 +320,14 @@ class SteganographyMessengerApp:
             self._notify_info("Success", "Message decoded successfully")
         except PermissionError as exc:  # pragma: no cover - GUI feedback
             self._notify_error("Access denied", str(exc))
+        except ValueError as exc:  # pragma: no cover - GUI feedback
+            message = str(exc)
+            if "Steganography Messenger data" in message:
+                message += (
+                    "\n\nThe image may have been saved using JPEG compression, "
+                    "which removes embedded bits. Use the original PNG/BMP stego image."
+                )
+            self._notify_error("Decoding failed", message)
         except Exception as exc:  # pragma: no cover - GUI feedback
             self._notify_error("Decoding failed", str(exc))
         finally:

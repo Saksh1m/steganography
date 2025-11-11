@@ -45,6 +45,12 @@ def embed_payload(image_path: str, payload: bytes, output_path: str, progress: P
     if not payload:
         raise ValueError("Payload is empty; nothing to embed")
 
+    _, ext = os.path.splitext(output_path)
+    if ext.lower() in {".jpg", ".jpeg"}:
+        raise ValueError(
+            "JPEG output cannot safely store embedded data. Choose a PNG or BMP file instead."
+        )
+
     with Image.open(image_path) as img:
         img = img.convert("RGB")
         arr = np.array(img)
